@@ -90,7 +90,7 @@ def main():
                     direction = Direction.RIGHT
 
                 if direction:
-                    # ¡MAGIA DEL TDD! Llamamos al método que ya probamos con pytest.
+                    # ¡MAGIA DEL TDD! Llamamos al metodo que ya probamos con pytest.
                     player.move(direction, grid)
 
         # B. ACTUALIZACIÓN DE LÓGICA (Solo el temporizador)
