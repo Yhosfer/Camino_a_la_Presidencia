@@ -1,4 +1,4 @@
-# 🧩 Puzzle Laberinto TDD
+# 🧩 Camino a la Presidencia
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Pygame-CE](https://img.shields.io/badge/Engine-Pygame--CE-orange.svg)](https://github.com/pygame-community/pygame-ce)
@@ -159,10 +159,14 @@ Puedes usarlo, modificarlo y aprender de él libremente.
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
-Desarrollado por **[TU_NOMBRE]** como proyecto práctico para dominar el desarrollo de videojuegos aplicando metodologías ágiles y **Test Driven Development**.
+Desarrollado como proyecto práctico para dominar el desarrollo de videojuegos aplicando metodologías ágiles y **Test Driven Development**.
+- Centeno Lopez Jose Alfredo
+- Pozu Vargas Luis Anthony
+- Quispe Sullca Yhosfer Anderson
+- Ramos Alatrista Eddy Robinson
 
-- 🔗 **GitHub:** [@TU_USUARIO](https://github.com/TU_USUARIO)
-- 📧 **Contacto:** [tu-email@ejemplo.com](mailto:tu-email@ejemplo.com)
+- 🔗 **GitHub:** [Yhosfer](https://github.com/Yhosfer)
+- 📧 **Contacto:** [yhosfer.quispe@estudiante.ucsm.edu.pe](mailto:tu-email@ejemplo.com)
 
