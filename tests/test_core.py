@@ -71,8 +71,8 @@ def test_player_cannot_push_block_into_wall():
 # ==============================================================================
 
 def test_game_timer_decreases_on_tick():
-    # Arrange: estado del juego con 10s y estado "PLAYING"
-    state = GameState(time_left=10)
+    # Arrange: estado del juego con 10s y estado EXPLÍCITO "PLAYING"
+    state = GameState(time_left=10, status="PLAYING")  # <-- AQUÍ ESTÁ EL CAMBIO
     assert state.status == "PLAYING"
 
     # Act: simulamos el paso del tiempo
@@ -143,9 +143,8 @@ def test_game_detects_victory_when_block_reaches_goal():
     assert grid.get_tile(2, 0) == TileType.BLOCK_ON_GOAL
 
 
-# ==============================================================================
+
 # --- PRUEBAS DE PAUSA Y REINICIO ---
-# ==============================================================================
 
 def test_pause_stops_timer_and_changes_state():
     # Arrange
@@ -178,7 +177,6 @@ def test_game_state_reset_restores_initial_values():
     assert state.status == "PLAYING"
     assert state.moves_count == 0
 
-
 def test_player_reset_position():
     # Arrange
     player = Player(x=5, y=5)
@@ -190,6 +188,7 @@ def test_player_reset_position():
     assert player.x == 1
     assert player.y == 1
 
+
 # --- PRUEBAS DEL MENÚ PRINCIPAL ---
 def test_game_starts_in_menu_and_transitions_to_playing():
     # Arrange: Un nuevo estado de juego (por defecto debería ser MENU)
@@ -200,7 +199,6 @@ def test_game_starts_in_menu_and_transitions_to_playing():
     state.tick()
     assert state.time_left == 30
 
-    # Act: El jugador presiona "Iniciar" (simulado con start_game)
     state.start_game()
 
     # Assert: El estado cambia a PLAYING y el tiempo ahora sí baja
