@@ -1,6 +1,5 @@
 # src/models.py
 from enum import Enum
-from typing import Tuple
 
 
 class Direction(Enum):
@@ -16,13 +15,13 @@ class TileType(Enum):
     BLOCK = 2
     PLAYER = 3
     GOAL = 4
+    BLOCK_ON_GOAL = 5
 
 
 class Grid:
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
-        # Inicializamos el tablero con celdas vacías
         self.tiles = [[TileType.EMPTY for _ in range(width)] for _ in range(height)]
 
     def set_tile(self, x: int, y: int, tile_type: TileType) -> None:
@@ -31,24 +30,37 @@ class Grid:
     def get_tile(self, x: int, y: int) -> TileType:
         return self.tiles[y][x]
 
+    def check_victory(self) -> bool:
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.tiles[y][x] == TileType.BLOCK_ON_GOAL:
+                    return True
+        return False
+
+    def clear(self) -> None:
+        """Limpia el tablero para poder reiniciar el nivel"""
+        self.tiles = [[TileType.EMPTY for _ in range(self.width)] for _ in range(self.height)]
+
 
 class Player:
     def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
 
-    def move(self, direction: Direction, grid: Grid) -> bool:
+    def reset(self, initial_x: int, initial_y: int) -> None:
+        self.x = initial_x
+        self.y = initial_y
+
+    def move(self, direction: Direction, grid: 'Grid') -> bool:
         dx, dy = direction.value
         new_x = self.x + dx
         new_y = self.y + dy
 
-        # 1. Verificar límites del tablero
         if not (0 <= new_x < grid.width and 0 <= new_y < grid.height):
             return False
 
         target_tile = grid.get_tile(new_x, new_y)
 
-        # 2. Movimiento a casilla vacía (o meta, por simplicidad en este avance)
         if target_tile in (TileType.EMPTY, TileType.GOAL):
             grid.set_tile(self.x, self.y, TileType.EMPTY)
             self.x = new_x
@@ -56,42 +68,54 @@ class Player:
             grid.set_tile(self.x, self.y, TileType.PLAYER)
             return True
 
-        # 3. Intentar empujar un bloque
         elif target_tile == TileType.BLOCK:
             block_new_x = new_x + dx
             block_new_y = new_y + dy
 
-            # Verificar que el bloque no salga del tablero
             if not (0 <= block_new_x < grid.width and 0 <= block_new_y < grid.height):
                 return False
 
             block_target_tile = grid.get_tile(block_new_x, block_new_y)
 
-            # El bloque solo se puede empujar a casillas vacías o metas
             if block_target_tile in (TileType.EMPTY, TileType.GOAL):
-                # 1. Limpiar la posición antigua del jugador
                 grid.set_tile(self.x, self.y, TileType.EMPTY)
-
-                # 2. Actualizar coordenadas del jugador y colocarlo donde estaba el bloque
                 self.x = new_x
                 self.y = new_y
                 grid.set_tile(self.x, self.y, TileType.PLAYER)
 
-                # 3. Colocar el bloque en su nueva posición definitiva
-                grid.set_tile(block_new_x, block_new_y, TileType.BLOCK)
-
+                new_block_type = TileType.BLOCK_ON_GOAL if block_target_tile == TileType.GOAL else TileType.BLOCK
+                grid.set_tile(block_new_x, block_new_y, new_block_type)
                 return True
 
-        # 4. Cualquier otro caso (Pared, otro bloque, etc.) es movimiento inválido
         return False
 
-
 class GameState:
-    def __init__(self, time_left: int, status: str = "PLAYING"):
+    # El estado por defecto ahora es "MENU"
+    def __init__(self, time_left: int, status: str = "MENU", moves_count: int = 0):
         self.time_left = time_left
         self.status = status
+        self.moves_count = moves_count
+
+    def increment_moves(self) -> None:
+        self.moves_count += 1
+
+    def start_game(self) -> None:
+        """Transiciona del menú al juego activo"""
+        self.status = "PLAYING"
+
+    def toggle_pause(self) -> None:
+        if self.status == "PLAYING":
+            self.status = "PAUSED"
+        elif self.status == "PAUSED":
+            self.status = "PLAYING"
+
+    def reset(self, initial_time: int) -> None:
+        self.time_left = initial_time
+        self.status = "PLAYING"
+        self.moves_count = 0
 
     def tick(self) -> None:
+        # El tiempo SOLO baja si está en PLAYING
         if self.status == "PLAYING":
             self.time_left -= 1
             if self.time_left <= 0:
