@@ -5,162 +5,75 @@
 [![Testing](https://img.shields.io/badge/Testing-pytest-green.svg)](https://docs.pytest.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Un juego de puzzles 2D desarrollado con **Python** y **Pygame-CE**, donde debes empujar bloques hacia la meta antes de que se agote el tiempo. 
-
-**Característica destacada:** Este proyecto fue desarrollado íntegramente aplicando la metodología **Test Driven Development (TDD)**, garantizando una lógica robusta, mantenible, escalable y con alta cobertura de pruebas unitarias.
+Un videojuego de puzzles 2D estilo **Sokoban** desarrollado en **Python** y **Pygame-CE** aplicando estrictamente las metodologías **TDD (Test-Driven Development)**, **BDD (Behavior-Driven Development)** y **ATDD (Acceptance Test-Driven Development)**.
 
 ---
 
 ## 🎮 Sobre el Juego
 
-### Mecánicas Principales
-- **Movimiento por cuadrícula:** Controla al personaje en un entorno de rejilla (grid) 2D.
-- **Física de empuje:** Empuja bloques marrones hacia la zona verde (meta).
-- **Gestión del tiempo:** Resuelve el puzzle antes de que el temporizador llegue a cero.
-- **Colisiones inteligentes:** El sistema impide movimientos inválidos (empujar bloques contra paredes o fuera del mapa).
+El objetivo del juego es empujar todos los bloques marrones hacia las metas verdes correspondientes en cada uno de los 3 niveles antes de que el temporizador llegue a cero.
 
-### Controles
-- **Flechas del teclado** o **W, A, S, D**: Mover al jugador.
-- **ESC** o cerrar la ventana: Salir del juego.
+### ⚙️ Mecánicas Principales
+* **Movimiento por Cuadrícula (15x15):** Controla al jugador en un entorno cerrado con bordes y obstáculos.
+* **Física de Empuje:** Empuja bloques marrones (`BLOCK`). Si un bloque entra en una meta se convierte en bloque dorado (`BLOCK_ON_GOAL`). Los bloques en meta pueden seguir empujándose hacia otras metas o espacios vacíos.
+* **Restauración de Casillas Pisadas:** Sistema inteligente `standing_on` en el modelo del jugador. Al caminar sobre metas (`GOAL`) o portales y luego retirarse, la casilla recupera su estado y diseño original, previniendo que se borren o desaparezcan.
+* **Mecánica Portales:** Portales azules (`PORTAL_BLUE`) interconectados que actúan como atajos de teletransportación inmediata (solo para el jugador, los bloques no pasan por portales).
+* **Gestión de Tiempo Inteligente:** Un temporizador global que disminuye en tiempo real. Cuenta con una barra de progreso visual de color dinámico (verde → amarillo → rojo).
+* **Deshacer Movimiento (Undo):** Implementado con el **Patrón Memento**, lo que permite retroceder movimientos ilimitadamente con la tecla `Z` para evitar bloqueos del nivel (deadlocks).
 
----
-
-## 🚀 Instalación y Ejecución
-
-### Requisitos Previos
-- Python 3.10 o superior (Probado en Python 3.14).
-- `pip` (gestor de paquetes de Python).
-
-### Pasos de Instalación
-
-1. **Clona este repositorio:**
-   ```bash
-   git clone https://github.com/[TU_USUARIO]/puzzle_laberinto.git
-   cd puzzle_laberinto
-
-   ```
-
-2. **Crea y activa un entorno virtual:**
-
-   ```bash
-   python -m venv .venv
-   ```
-
-   **En Windows:**
-
-   ```bash
-   .venv\Scripts\activate
-   ```
-
-   **En Linux / macOS:**
-
-   ```bash
-   source .venv/bin/activate
-   ```
-
-   > Deberías ver `(.venv)` al principio de tu línea de comandos, indicando que el entorno virtual está activo.
-
-3. **Instala las dependencias del proyecto:**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Ejecuta las pruebas unitarias:**
-
-   ```bash
-   pytest
-   ```
-
-   > Deberías ver las pruebas pasando correctamente, validando la lógica del movimiento y el temporizador.
-
-5. **¡A jugar!**
-
-   ```bash
-   python src/main.py
-   ```
-
----
-
-## 🧪 Desarrollo con Test Driven Development (TDD)
-
-Este proyecto sigue estrictamente el ciclo **Rojo → Verde → Refactor**:
-
-- 🔴 **Rojo:** Se escribe una prueba que falla porque la funcionalidad aún no existe.
-- 🟢 **Verde:** Se implementa el código mínimo necesario para que la prueba pase.
-- 🔵 **Refactor:** Se mejora y limpia el código sin cambiar su comportamiento, con la seguridad de que las pruebas lo respaldan.
-
-### Ejemplo de Prueba Unitaria
-
-Así se ve una prueba real del proyecto ubicada en `tests/test_core.py`:
-
-python def test_player_can_move_to_empty_cell(): grid = Grid(width=5, height=5) player = Player(x=1, y=1)
-
+### ⌨️ Controles
+* **Flechas del Teclado / W, A, S, D:** Mover al jugador.
+* **Z:** Deshacer movimiento anterior (Undo).
+* **R:** Reiniciar el nivel actual (Habilitado en partida y en la pantalla de *Game Over*).
+* **ESC:**
+  * Durante el juego: Abre/Cierra el menú de pausa.
+  * En menú de pausa: Reanuda la partida.
+  * En pantalla de *Game Over*: Vuelve al menú principal.
 
 ---
 
 ## 🏗️ Arquitectura: Separación de Responsabilidades
 
-El mayor desafío del TDD en videojuegos es aislar la lógica del renderizado.  
-Este proyecto lo resuelve separando claramente la lógica del juego, la vista y las pruebas.
+El núcleo del proyecto está diseñado con desacoplamiento total entre lógica y representación visual:
 
-### Componentes principales
-
-- **`src/models.py`**  
-  Contiene el 100% de la lógica pura del juego, como `Grid`, `Player` y `GameState`.  
-  No importa ninguna librería gráfica.
-
-- **`src/main.py`**  
-  Funciona como una vista sencilla.  
-  Lee los datos de `models.py`, dibuja los elementos del juego y traduce las teclas en comandos.
-
-- **`tests/test_core.py`**  
-  Valida la lógica del juego en milisegundos, sin abrir ventanas ni depender de hardware gráfico.
-
-Gracias a esta arquitectura, el motor gráfico pudo cambiarse de `arcade` a `pygame-ce` en minutos sin tocar una sola línea de la lógica principal del juego.
+1. **`src/models.py` (Lógica Pura):** Contiene el modelo de datos e interactores independientes (`Grid`, `Player`, `GameState`, `TileType`). No importa librerías gráficas, lo que facilita pruebas automatizadas ultrarrápidas.
+2. **`src/main.py` (Vista Pasiva):** Traduce los eventos de entrada del teclado y se encarga del renderizado gráfico mediante Pygame-CE, HUD, menús y animaciones de partículas.
+3. **`levels/` (Niveles Externos):** Almacena mapas de 15x15 en texto plano (`nivel1.txt`, `nivel2.txt`, `nivel3.txt`).
 
 ---
 
-## 📁 Estructura del Proyecto
+## 🎨 Pulido Gráfico y Efectos (High Fidelity)
 
-```text
-puzzle_laberinto/
-├── src/
-│   ├── main.py
-│   └── models.py
-├── tests/
-│   └── test_core.py
-├── requirements.txt
-├── README.md
-└── LICENSE
+* **Animaciones Senoidales en Tiempo Real:**
+  * **Metas (G):** Emiten un halo circular de luz verde esmeralda que pulsa suavemente.
+  * **Bloques en metas (BLOCK_ON_GOAL):** Presentan un halo dorado brillante de éxito.
+* **Efecto de Partículas Orbitales en Portales (X, Y):** Los portales azules poseen 3 partículas celestes orbitando en sentido horario, mientras que los rojos rotan en sentido antihorario.
+* **Efectos 3D y Sombras:** Sombra proyectada en el jugador, refuerzos clásicos de madera en los bloques y sombreado 3D en las paredes.
+* **Pantalla de Transición Inter-Nivel:** Al resolver un puzzle, se congela el tiempo de juego y se muestra una pantalla de éxito durante 2.5 segundos que resume movimientos, tiempo y presenta una barra de progreso de carga animada.
+* **Marcador Global:** Se acumula el total de movimientos de la sesión completa, mostrando la puntuación definitiva al ganar en la pantalla final de *Juego Completado*.
+
+---
+
+## 🧪 Pruebas Unitarias (TDD / BDD)
+
+La lógica del juego está blindada con **25 pruebas unitarias automatizadas** que cubren el 100% de la lógica crítica, incluyendo:
+* Reglas de movimiento sobre casillas vacías y colisiones contra paredes.
+* Reglas de empuje de bloques (hacia suelo, hacia metas y bloqueos).
+* Mecánica de teletransportación por portales y validaciones de salidas bloqueadas.
+* Patrón Memento (Undo y deshecho de estados).
+* Restauración de casillas originales (metas y portales) tras el paso del jugador.
+
+### Ejecución de Pruebas
+Activa tu entorno virtual e instala los requerimientos si aún no lo has hecho:
+```bash
+pip install -r requirements.txt
+pytest -v
 ```
----
-
-## 🎯 Roadmap
-
-Próximas mejoras planeadas para el proyecto:
-
-- Implementar condición de victoria al detectar cuando el bloque está sobre la meta.
-- Cargar niveles dinámicamente desde archivos externos, como `.json` o `.txt`.
-- Añadir múltiples niveles con dificultad progresiva.
-- Integrar efectos de sonido para movimiento, choque, victoria y game over.
-- Reemplazar los cuadrados de colores por sprites reales.
-- Añadir un menú principal.
-- Añadir pantalla de reinicio.
-- Mejorar la interfaz visual del temporizador.
-
----
 
 ---
 
 ## 👨‍💻 Autores
-
-Desarrollado como proyecto práctico para dominar el desarrollo de videojuegos aplicando metodologías ágiles y **Test Driven Development**.
-- Centeno Lopez Jose Alfredo
-- Pozu Vargas Luis Anthony
-- Quispe Sullca Yhosfer Anderson
-- Ramos Alatrista Eddy Robinson
-
-- 🔗 **GitHub:** [Yhosfer](https://github.com/Yhosfer)
-- 📧 **Contacto:** [yhosfer.quispe@estudiante.ucsm.edu.pe](mailto:tu-email@ejemplo.com)
-
+* Centeno Lopez Jose Alfredo
+* Pozu Vargas Luis Anthony
+* Quispe Sullca Yhosfer Anderson
+* Ramos Alatrista Eddy Robinson
