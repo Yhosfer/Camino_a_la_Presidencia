@@ -1,12 +1,8 @@
 # tests/test_core.py
 import pytest
-from src.models import Grid, Player, Direction, TileType, GameState
+from src.models import Grid, Player, Direction, TileType, GameState, load_level_from_file
 
-
-# ==============================================================================
 # --- PRUEBAS DE MOVIMIENTO ---
-# ==============================================================================
-
 def test_player_moves_to_empty_tile():
     # Arrange: se crea el tablero
     grid = Grid(width=3, height=3)
@@ -72,7 +68,7 @@ def test_player_cannot_push_block_into_wall():
 
 def test_game_timer_decreases_on_tick():
     # Arrange: estado del juego con 10s y estado EXPLÍCITO "PLAYING"
-    state = GameState(time_left=10, status="PLAYING")  # <-- AQUÍ ESTÁ EL CAMBIO
+    state = GameState(time_left=10, status="PLAYING")
     assert state.status == "PLAYING"
 
     # Act: simulamos el paso del tiempo
@@ -145,25 +141,23 @@ def test_game_detects_victory_when_block_reaches_goal():
 
 
 # --- PRUEBAS DE PAUSA Y REINICIO ---
-
 def test_pause_stops_timer_and_changes_state():
     # Arrange
     state = GameState(time_left=10, status="PLAYING")
 
-    # Act: Pausar
+    # Act: Pausar (ahora abre el menú de pausa)
     state.toggle_pause()
 
-    # Assert: Estado cambia y el tiempo no baja al hacer tick
-    assert state.status == "PAUSED"
+    # Assert: Estado cambia a PAUSE_MENU y el tiempo no baja al hacer tick
+    assert state.status == "PAUSE_MENU"  # <-- CAMBIO AQUÍ
     state.tick()
     assert state.time_left == 10
 
-    # Act: Reanudar
-    state.toggle_pause()
+    # Act: Reanudar (desde el menú de pausa)
+    state.resume_game()  # <-- CAMBIO AQUÍ (antes era toggle_pause())
 
     # Assert
     assert state.status == "PLAYING"
-
 
 def test_game_state_reset_restores_initial_values():
     # Arrange: Un juego que ya se usó (tiempo bajo, muchos movimientos, game over)
@@ -205,3 +199,87 @@ def test_game_starts_in_menu_and_transitions_to_playing():
     assert state.status == "PLAYING"
     state.tick()
     assert state.time_left == 29
+
+# --- PRUEBAS DEL MENÚ DE PAUSA ---
+
+def test_pause_menu_transitions_to_main_menu():
+    # Arrange: Un juego en PAUSE_MENU (estado nuevo)
+    state = GameState(time_left=15, status="PAUSE_MENU", moves_count=8)
+
+    # Act: El jugador selecciona "Volver al Menú Principal"
+    state.return_to_main_menu(initial_time=30)
+
+    # Assert: Todo se reinicia y vuelve al menú
+    assert state.status == "MENU"
+    assert state.time_left == 30
+    assert state.moves_count == 0
+    # El tiempo NO debe correr en el menú
+    state.tick()
+    assert state.time_left == 30
+
+
+def test_pause_menu_can_resume_game():
+    # Arrange: Juego pausado con opciones visibles
+    state = GameState(time_left=15, status="PAUSE_MENU", moves_count=8)
+
+    # Act: El jugador selecciona "Continuar"
+    state.resume_game()
+
+    # Assert: Vuelve a PLAYING y el tiempo sí corre
+    assert state.status == "PLAYING"
+    state.tick()
+    assert state.time_left == 14
+    # Los movimientos se mantienen
+    assert state.moves_count == 8
+
+
+# --- PRUEBAS DE MÚLTIPLES NIVELES ---
+def test_level_loader_reads_file_correctly(tmp_path):
+    # Arrange: Crear un archivo de nivel temporal
+    level_file = tmp_path / "test_level.txt"
+    level_file.write_text(
+        "WWWWW\n"
+        "W.P.W\n"  # El 'P' está en la columna 2 (índice 2), fila 1 (índice 1)
+        "W.B.W\n"
+        "W.G.W\n"
+        "WWWWW"
+    )
+
+    # Act: Cargar el nivel
+    grid = Grid(width=5, height=5)
+    player = Player(x=0, y=0)
+    load_level_from_file(str(level_file), grid, player)
+
+    # Assert: Verificar que el tablero refleja el archivo
+    assert grid.get_tile(2, 1) == TileType.PLAYER  # <-- CORREGIDO: (2, 1) no (1, 1)
+    assert grid.get_tile(2, 2) == TileType.BLOCK
+    assert grid.get_tile(2, 3) == TileType.GOAL
+    assert grid.get_tile(0, 0) == TileType.WALL
+    assert player.x == 2  # <-- CORREGIDO
+    assert player.y == 1  # <-- CORREGIDO
+
+
+def test_level_transitions_on_victory():
+    # Arrange: Un juego en el nivel 1
+    state = GameState(time_left=30, status="PLAYING", moves_count=5, current_level=1)
+
+    # Act: Detectar victoria
+    state.advance_to_next_level(total_levels=3, initial_time=30)
+
+    # Assert: Avanza al nivel 2
+    assert state.current_level == 2
+    assert state.status == "PLAYING"
+    assert state.time_left == 30
+    assert state.moves_count == 0
+
+
+def test_game_completed_after_last_level():
+    # Arrange: Un juego en el último nivel (3 de 3)
+    state = GameState(time_left=30, status="PLAYING", moves_count=10, current_level=3)
+
+    # Act: Detectar victoria en el último nivel
+    state.advance_to_next_level(total_levels=3, initial_time=30)
+
+    # Assert: Estado de juego completado
+    assert state.status == "JUEGO_COMPLETADO"
+    assert state.current_level == 3

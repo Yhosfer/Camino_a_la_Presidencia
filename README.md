@@ -151,12 +151,6 @@ Próximas mejoras planeadas para el proyecto:
 
 ---
 
-## 📝 Licencia
-
-Este proyecto es de código abierto y está disponible bajo la licencia **MIT**.
-
-Puedes usarlo, modificarlo y aprender de él libremente.
-
 ---
 
 ## 👨‍💻 Autores
